@@ -1,0 +1,32 @@
+
+
+
+
+.container {
+    border: 1px solid var(--semi-color-border);
+    display: flex;
+    height: 100vh;
+}
+.header{
+    background-color: var(--semi-color-bg-1);
+
+}
+.leftSide{
+    background-color: var(--semi-color-bg-1);
+}
+.content{
+    background-color: var(--semi-color-bg-1);
+    border: 1px solid var(--semi-color-border);
+    border-radius: 15px;
+    margin:5px;
+    height: calc(100vh - 120px);
+    overflow: auto;
+}
+.footer{
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+    color: var(--semi-color-text-2);
+    background-color: rgba(var(--semi-grey-0), 1);
+}
+

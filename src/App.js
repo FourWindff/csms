@@ -1,25 +1,22 @@
-import logo from './logo.svg';
 import './App.css';
+import AuthPage from "./page/authpage";
+import HomePage from "./page/homepage";
+
+import {BrowserRouter, Route, Routes} from "react-router-dom";
+
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    return (
+        <div className="App">
+            <BrowserRouter>
+                <Routes>
+                    <Route path="/" element={<AuthPage/>}/> {/* 默认路由到登录/注册页 */}
+                    <Route path="/auth" element={<AuthPage/>}/> {/* 路由到登录/注册页 */}
+                    <Route path="/home" element={<HomePage/>}/> {/* 工作页面 */}
+                </Routes>
+            </BrowserRouter>
+        </div>
+    );
 }
 
 export default App;
