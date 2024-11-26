@@ -1,65 +1,42 @@
-import React, {useContext, useEffect, useRef, useState} from 'react';
-import {Form, Notification, Button, Toast} from '@douyinfe/semi-ui';
-import {genderType, gradeType, REQUEST} from './data/api';
-import {UserIdContext} from "../index";
+import React, {useContext, useEffect, useRef} from 'react';
+import {Form, Button, Toast} from '@douyinfe/semi-ui';
+import API_ENDPOINTS, {genderType, getFormData, gradeType, REQUEST} from './data/api';
+import {UserContext} from "../index";
+
 
 
 export default function StudentInfo() {
-    const userId = useContext(UserIdContext);
+    const user = useContext(UserContext);
     const formRef = useRef(null);
 
     useEffect(() => {
-        REQUEST.getStudent(userId)
-            .then(response => {
-                if (!response.ok) {
-                    Toast.error(`请求错误！${response.json()}`);
-                } else {
-                    return response.json();
-                }
-            })
-            .then(result => {
-                if (!result) return;
-                const code = result?.code;
-                if (code === 1) {
-                    formRef.current.formApi.setValues(result.data);
-                }
-            })
-            .catch(error => {
-                console.log("Error fetching matches", error);
-                Notification.error({
-                    title: '加载失败',
-                    content: `无法获取学生用户信息：${error.message}`,
-                })
-            })
+        REQUEST.GET_REQUEST(
+            API_ENDPOINTS.getStudent,
+            user.userId,
+            (message, data) => {
+                formRef.current.formApi.setValues(data);
+            },
+            (message) => {
+                Toast.error(message);
+            }
+        )
+
     }, []);
 
     // 表单提交回调
     const handleFormSubmit = (values) => {
-        const studentInfo = {...values, userId: userId};
-        REQUEST.updateStudent(studentInfo)
-            .then(response => {
-                if (!response.ok) {
-                    Toast.error("请求错误");
-                } else {
-                    return response.json();
-                }
-            })
-            .then(result => {
-                if (!result) return;
-                const code = result.code;
+        const studentInfo = {...values, userId: user.userId};
 
-                if (code === 1) {
-                    Toast.success("更改成功")
-                } else {
-                    Toast.error("更改失败")
-                }
-            })
-            .catch(error => {
-                Notification.error({
-                    title: '网络错误',
-                    content: `提交失败：${error.message}`,
-                });
-            })
+        REQUEST.PUT_REQUEST(
+            API_ENDPOINTS.updateStudent,
+            getFormData(studentInfo),
+            (message, data) => {
+                Toast.success(message)
+            },
+            (message) => {
+                Toast.error(message)
+            }
+        )
     };
 
     return (
@@ -98,8 +75,8 @@ export default function StudentInfo() {
                     required/>
                 <Form.Input
                     field="department"
-                    label="部门"
-                    placeholder="请输入部门"
+                    label="学院"
+                    placeholder="请输入学院"
                     required/>
                 <Form.TextArea
                     field="profile"

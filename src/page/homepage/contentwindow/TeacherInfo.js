@@ -1,73 +1,47 @@
-
-
-
 import React, {useState, useEffect, useContext, useRef} from 'react';
 import {Form, Input, Notification, Button, Select, Toast} from '@douyinfe/semi-ui';
-import API_ENDPOINTS, {genderType, gradeType, matchType, REQUEST} from './data/api';
-import {UserIdContext} from "../index"; // API 端点
+import API_ENDPOINTS, {genderType, getFormData, gradeType, matchType, REQUEST} from './data/api';
+import {UserContext} from "../index"; // API 端点
 
 
 export default function TeacherInfo() {
-    const userId = useContext(UserIdContext);
+    const user = useContext(UserContext);
     const formRef = useRef(null);
 
+
     useEffect(() => {
-        REQUEST.getTeacher(userId)
-            .then(response => {
-                if (!response.ok) {
-                    Toast.error(`请求错误！${response.json()}`);
-                } else {
-                    return response.json();
-                }
-            })
-            .then(result => {
-                if (!result) return;
-                const code = result?.code;
-                if (code === 1) {
-                    console.log(result.data)
-                    formRef.current.formApi.setValues(result.data);
-                }
-            })
-            .catch(error => {
-                console.log("Error fetching matches", error);
-                Notification.error({
-                    title: '加载失败',
-                    content: `无法获取教师用户信息：${error.message}`,
-                })
-            })
+        REQUEST.GET_REQUEST(
+            API_ENDPOINTS.getTeacher,
+            user.userId,
+            (message, data) => {
+                formRef.current.formApi.setValues(data);
+            },
+            (message) => {
+                Toast.error(message);
+            }
+        )
+
     }, []);
 
     // 表单提交回调
     const handleFormSubmit = (values) => {
-        const studentInfo = {...values, userId: userId};
-        REQUEST.updateTeacher(studentInfo)
-            .then(response => {
-                if (!response.ok) {
-                    Toast.error("请求错误");
-                } else {
-                    return response.json();
-                }
-            })
-            .then(result => {
-                if (!result) return;
-                const code = result.code;
-                if (code === 1) {
-                    Toast.success("更改成功");
-                } else {
-                    Toast.error("更改失败")
-                }
-            })
-            .catch(error => {
-                Notification.error({
-                    title: '网络错误',
-                    content: `提交失败：${error.message}`,
-                });
-            })
+        const teacherInfo = {...values, userId: user.userId};
+        REQUEST.PUT_REQUEST(
+            API_ENDPOINTS.updateTeacher,
+            getFormData(teacherInfo),
+            (message,data)=>{
+                Toast.success(message);
+            },
+            (message)=>{
+                Toast.error(message);
+            }
+        )
+
     };
 
     return (
-        <div style={{ maxWidth: 600, margin: '0 auto', padding: '20px' }}>
-            <h1 style={{ textAlign: 'center', marginBottom: '20px' }}>修改老师信息</h1>
+        <div style={{maxWidth: 600, margin: '0 auto', padding: '20px'}}>
+            <h1 style={{textAlign: 'center', marginBottom: '20px'}}>修改老师信息</h1>
             <Form
                 ref={formRef}
                 onSubmit={handleFormSubmit}
@@ -134,7 +108,7 @@ export default function TeacherInfo() {
                         </Form.Select.Option>
                     ))}
 
-                    </Form.Select>
+                </Form.Select>
 
                 {/* 年龄 */}
                 <Form.Input
@@ -147,7 +121,7 @@ export default function TeacherInfo() {
 
                 {/* 提交按钮 */}
                 <Form.Slot>
-                    <Button type="primary" htmlType="submit" style={{ marginRight: 16 }}>
+                    <Button type="primary" htmlType="submit" style={{marginRight: 16}}>
                         提交
                     </Button>
                     <Button htmlType="reset" type="tertiary">

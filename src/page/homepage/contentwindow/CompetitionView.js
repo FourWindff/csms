@@ -4,53 +4,40 @@ import {
     Avatar,
     ButtonGroup,
     Button,
-    Notification,
     Toast, Modal, Form
 } from '@douyinfe/semi-ui';
-import {REQUEST} from "./data/api";
-import {UserIdContext} from "../index";
+import API_ENDPOINTS, {getFormData, REQUEST} from "./data/api";
+import {UserContext} from "../index";
 
-function CompetitionItem({match, onSignUp}) {
+function CompetitionItem({match}) {
     const [viewModalVisible, setViewModalVisible] = useState(false);
     const [signUpModalVisible, setSignUpModalVisible] = useState(false);
     const formRef = useRef(null);
-    const userId = useContext(UserIdContext);
+    const user = useContext(UserContext);
 
     const handleViewOk = () => {
         setSignUpModalVisible(true);
     }
     const handleSignUpOk = (values, matchId) => {
-        const registration={
+        const registration = {
             ...values,
-            matchId:matchId,
-            status:"PENDING",
+            matchId: matchId,
+            status: "PENDING",
         };
-        REQUEST.saveRegistration(registration)
-            .then(response => {
-                if (!response.ok) {
-                    Toast.error("请求错误");
-                } else {
-                    return response.json();
-                }
-            })
-            .then(result => {
-                if (!result) return;
-                const code = result.code;
-                const msg = result?.msg;
-                if (code === 1) {
-                    Toast.success("报名成功");
-                } else {
-                    Toast.error("报名失败");
-                }
-            })
-            .catch(error => {
-                Notification.error({
-                    title: '网络错误',
-                    content: `提交失败：${error.message}`,
-                });
-            })
-        setSignUpModalVisible(false);
-        setViewModalVisible(false);
+        const formData=getFormData(registration);
+        REQUEST.POST_REQUEST(
+            API_ENDPOINTS.saveRegistration,
+            formData,
+            (message,data)=>{
+                Toast.success(message);
+                setSignUpModalVisible(false);
+                setViewModalVisible(false);
+            },
+            (message)=>{
+                Toast.error(message);
+            }
+        )
+
     }
     const handleViewCancel = () => {
         setViewModalVisible(false);
@@ -128,12 +115,13 @@ function CompetitionItem({match, onSignUp}) {
                                 label="学生Id"
                                 field="studentId"
                                 placeholder="请输入学号"
-                                initValue={userId}
+                                initValue={user.role==='student'?user.userId:null}
                                 required/>
                             <Form.Input
                                 label="指导老师Id"
                                 field="teacherId"
                                 placeholder="请输入指导老师Id"
+                                initValue={user.role==='teacher'?user.userId:null}
                                 required/>
                         </Form>
                     </Modal>
@@ -166,28 +154,16 @@ export default function CompetitionView() {
     const [matches, setMatches] = useState(); // 初始使用模拟数据
 
     useEffect(() => {
-        REQUEST.getMatches()
-            .then(response => {
-                if (!response.ok) {
-                    Toast.error(`请求错误！${response.json()}`);
-                } else {
-                    return response.json();
-                }
-            })
-            .then(result => {
-                if (!result) return;
-                const code = result?.code;
-                if (code === 1) {
-                    setMatches(result.data);
-                }
-            })
-            .catch(error => {
-                console.log("Error fetching matches", error);
-                Notification.error({
-                    title: '加载失败',
-                    content: `无法获取竞赛数据：${error.message}`,
-                })
-            })
+        REQUEST.GET_REQUEST(
+            API_ENDPOINTS.getCompetitionAll,
+            null,
+            (message, data) => {
+                setMatches(data);
+            },
+            (message) => {
+                Toast.error(message);
+            }
+        )
     }, []);
     return (
         <div style={{padding: 20}}>

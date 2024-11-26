@@ -1,38 +1,18 @@
 import React from 'react';
 import {Form, Notification, Button, Toast} from '@douyinfe/semi-ui';
-import API_ENDPOINTS, {matchType, REQUEST} from "./data/api";
+import API_ENDPOINTS, {getFormData, matchType, REQUEST} from "./data/api";
 
 export default function CompetitionRelease() {
     // 表单提交时的回调
-    const handleFormSubmit = async (values) => {
-        console.log('上传竞赛信息:', JSON.stringify(values));
-        REQUEST.saveMatches(values)
-            .then(response=>{
-                if(!response.ok){
-                    Notification.error({
-                        title: '提交失败',
-                        content: `错误信息：${response.json() || '未知错误'}`,
-                    });
-                }else{
-                    return response.json();
-                }
-            })
-            .then(result => {
-                if(!result) return ;
-                const code = result?.code;
-                const message = result?.msg;
-                if (code === 1) {
-                    Toast.success('提交成功！');
-                } else {
-                    Notification.error({
-                        title: '提交失败',
-                        content: `错误原因：${message}`,
-                    });
-                }
-            })
-            .catch(error => {
-                Toast.error(`错误！${error}`);
-            })
+    const handleFormSubmit = (values) => {
+        console.log('上传竞赛信息:', values);
+        const formData=getFormData(values);
+        REQUEST.POST_REQUEST(
+            API_ENDPOINTS.saveCompetition,
+            formData,
+            (message,data)=>Toast.success(message),
+            (message)=>Toast.error(message),
+        )
 
     };
 

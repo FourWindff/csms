@@ -1,89 +1,45 @@
 // AuthPage.js
-import React, { useState} from 'react';
+import React, {useState} from 'react';
 import {Form, Button, Tabs, Toast, Notification} from '@douyinfe/semi-ui';
 import {useNavigate} from 'react-router-dom';
-import {REQUEST} from "../homepage/contentwindow/data/api";
+import API_ENDPOINTS, {getFormData, REQUEST} from "../homepage/contentwindow/data/api";
 
 
 export default function AuthPage() {
     const [activeTab, setActiveTab] = useState('login');
     const navigate = useNavigate();
-
+    const handleSuccess = (message, data) => {
+        Toast.success(message);
+        navigate('/home', {
+            state: {
+                username: data?.username || data.role,
+                userId: data?.userId,
+                role: data?.role,
+            }
+        });
+    }
+    const handleError=(message)=>{
+        Toast.error(message);
+    }
     const handleLogin = (values) => {
         console.log('Login:', values);
-        REQUEST.login(values)
-            .then(response => {
-                if (!response.ok) {
-                    Notification.error({
-                        title: '登录请求失败',
-                        content: `错误信息：${response.json()}`,
-                    });
-                }else{
-                    return response.json();
-                }
-
-            })
-            .then(result => {
-                if(!result) return ;
-                const code = result?.code;
-                const message = result?.msg;
-                const data = result?.data;
-                if (code === 1) {
-                    Toast.success('登录成功！');
-                    navigate('/home', {
-                        state: {
-                            username: data?.username || data.role,
-                            userId: data?.userId,
-                            role: data?.role,
-                        }
-                    });
-                } else {
-                    Notification.error({
-                        title: '登录失败',
-                        content: `错误原因：${message}`,
-                    });
-                }
-            })
-            .catch(error => {
-                Toast.error(`错误！${error}`);
-            })
+        const formData = getFormData(values);
+        REQUEST.POST_REQUEST(
+            API_ENDPOINTS.login,
+            formData,
+            handleSuccess,
+            handleError
+        );
     };
     const handleRegister = (values) => {
         console.log('Register:', values);
-        REQUEST.register(values)
-            .then(response => {
-                if (!response.ok) {
-                    Notification.error({
-                        title: '注册请求失败',
-                        content: `错误信息：${response.json()}`,
-                    });
-                }
-                return response.json();
-            })
-            .then(result => {
-                const code = result.code;
-                const message = result.msg;
-                const data = result.data;
-                if (code === 1) {
-                    Toast.success('注册成功！');
-                    navigate('/home', {
-                        state: {
-                            username: data?.username || data.role,
-                            userId: data?.userId,
-                            role: data?.role,
-                        }
-                    });
-                } else {
-                    Notification.error({
-                        title: '注册失败',
-                        content: `错误原因：${message}`,
-                    });
-                }
-            })
-            .catch(error => {
-                Toast.error(`错误！${error}`);
-            })
-
+        const formData=getFormData(values);
+        REQUEST.POST_REQUEST(
+            API_ENDPOINTS.register,
+            formData,
+            handleSuccess,
+            handleError
+        );
     };
 
     return (

@@ -7,7 +7,8 @@ import {
     Form,
     Notification, Toast,
 } from '@douyinfe/semi-ui';
-import {matchType, REQUEST} from './data/api';
+import API_ENDPOINTS, {getFormData, matchType, REQUEST} from './data/api';
+import TopSlotSvg from "@douyinfe/semi-ui/lib/es/avatar/TopSlotSvg";
 
 
 function CompetitionEdit({prevMatch, onSubmit, onCancel}) {
@@ -127,29 +128,18 @@ export default function CompetitionManagement() {
     const [isEditing, setIsEditing] = useState(false); // 控制是否显示编辑表单
     const [currentMatch, setCurrentMatch] = useState(null); // 当前正在编辑的竞赛数据
 
+
     useEffect(() => {
-        REQUEST.getMatches()
-            .then(response => {
-                if (!response.ok) {
-                    Toast.error(`请求错误！${response.json()}`);
-                } else {
-                    return response.json();
-                }
-            })
-            .then(result => {
-                if (!result) return;
-                const code=result?.code;
-                if(code===1){
-                    setMatches(result.data);
-                }
-            })
-            .catch(error => {
-                console.log("Error fetching matches", error);
-                Notification.error({
-                    title: '加载失败',
-                    content: `无法获取竞赛数据：${error.message}`,
-                })
-            })
+        const handleSuccess = (message, data) => {
+            Toast.success(message);
+            setMatches(data);
+        }
+        REQUEST.GET_REQUEST(
+            API_ENDPOINTS.getCompetitionAll,
+            null,
+            handleSuccess,
+            (message)=>Toast.error(message)
+        )
     }, []);
 
     const handleEdit = (match) => {
@@ -163,71 +153,48 @@ export default function CompetitionManagement() {
     const handleDelete = async (match, setDisabled) => {
         // 弹出确认删除对话框
         const confirmDelete = window.confirm(`确定删除竞赛 ${match.name} 吗？`);
+        const handleSuccess=(message,data)=>{
+            Toast.success(message);
+            setMatches(matches.filter((m) => m.id !== match.id));
+            setDisabled(false);
+        }
+        const handleError=(message)=>{
+            Toast.error(message);
+            setDisabled(false);
+        }
         if (confirmDelete) {
             setDisabled(true);
-            REQUEST.deleteMatches(match.id)
-                .then(response => {
-                    if(!response.ok){
-                        Notification.error({
-                            title: '删除失败',
-                            content: '删除竞赛时出错，请稍后再试。',
-                        });
-                    }else{
-                        return response.json();
-                    }
-                })
-                .then(result=>{
-                    if(!result) return ;
-                    const code=result?.code;
-                    if(code===1){
-                        setMatches(matches.filter((m) => m.id !== match.id));
-                    }
-                })
-                .catch(error => {
-                    Notification.error({
-                        title: '网络错误',
-                        content: `删除失败：${error.message}`,
-                    });
-                })
-                .finally(() => {
-                    setDisabled(false);
-                })
+            REQUEST.DELETE_REQUEST(
+                API_ENDPOINTS.deleteCompetition,
+                match.id,
+                handleSuccess,
+                handleError
+            )
         }
     };
     const handleChangeEdit = async (values, setDisabled) => {
         setDisabled(true);
-        REQUEST.updateMatches(values)
-            .then(response => {
-                if (!response.ok) {
-                    Toast.error(`请求错误！${response.json()}`);
-                } else {
-                    return response.json();
-                }
-            })
-            .then(result => {
-                if (!result) return;
-                const code = result?.code;
-                if (code === 1) {
-                    Toast.success("更改成功") ;
-                    // 更新列表中的数据
-                    setMatches(matches.map((match) =>
-                        match.id === currentMatch.id ? {...match, ...values} : match
-                    ));
-                    setIsEditing(false); // 隐藏编辑表单
-                    setCurrentMatch(null); // 清空当前编辑的数据
-                }
-            })
-            .catch(error => {
-                Notification.error({
-                    title: '错误',
-                    content: `修改失败：${error.message}`,
-                });
-            })
-            .finally(() => {
-                setDisabled(false);
-            });
-
-
+        const formData=getFormData(values);
+        const handleSuccess=(message,data)=>{
+            Toast.success(message);
+            // 更新列表中的数据
+            setMatches(matches.map((match) =>
+                match.id === currentMatch.id ? {...match, ...values} : match
+            ));
+            setIsEditing(false); // 隐藏编辑表单
+            setCurrentMatch(null); // 清空当前编辑的数据
+            setDisabled(false);
+        }
+        const handleError=(message)=>{
+            Toast.error(message);
+            setDisabled(false);
+        }
+        REQUEST.PUT_REQUEST(
+            API_ENDPOINTS.updateCompetition,
+            formData,
+            handleSuccess,
+            handleError,
+        )
     }
 
 

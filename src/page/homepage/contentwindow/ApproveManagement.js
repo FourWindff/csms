@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {List, Avatar, ButtonGroup, Button, Notification, Toast} from '@douyinfe/semi-ui';
-import {registrationMock, REQUEST, reviewType} from './data/api'; // 假设这是你之前的模拟数据
+import {List, Avatar, ButtonGroup, Button, Toast, Modal} from '@douyinfe/semi-ui';
+import API_ENDPOINTS, {getFormData, registrationDTOType, REQUEST, reviewType} from './data/api';
 
 const getStatusColor = (status) => {
     switch (status) {
@@ -18,40 +18,52 @@ const parseReviewType = (status) => {
     const type = reviewType.find(item => item.value === status);
     return type.label;
 }
-const updateRegistrationStatus = (registration, status, setRegistrations) => {
-    // 这里模拟发送请求到后端
-    REQUEST.updateRegistration({...registration, status: status})
-        .then(response => {
-            if (response.ok) {
-                Notification.success({
-                    title: '状态更新成功',
-                    content: `报名状态已更新为 ${status}`,
-                });
-                setRegistrations((prevRegistrations) =>
-                    prevRegistrations.map((reg) =>
-                        reg.id === registration.id
-                            ? {...reg, status: status}
-                            : reg
-                    )
-                );
-            } else {
-                Notification.error({
-                    title: '状态更新失败',
-                    content: '更新报名状态时出错，请稍后再试。',
-                });
-            }
-        })
-        .catch(error => {
-            Notification.error({
-                title: '网络错误',
-                content: `更新状态失败：${error.message}`,
-            });
-        })
+const parseRegistrationDTOType = (key) => {
+    const item = registrationDTOType.find(item => item.value === key);
+    return item.label;
+}
+const updateRegistrationStatus = (registration, status, setRegistrationDTOList) => {
+    const handleSuccess = (message, data) => {
+        Toast.success(message);
+        setRegistrationDTOList((prevRegistrationDTOList) =>
+            prevRegistrationDTOList.map((dto) =>
+                dto.registration.id === registration.id
+                    ? {
+                        ...dto,
+                        registration: {
+                            ...dto.registration,
+                            status: status,
+                        }
+                    }
+                    : dto
+            )
+        );
+    }
+    const handleError = (message) => {
+        Toast.error(message);
+    }
+
+    const formData = getFormData(registration);
+    formData.set('status', status);
+    REQUEST.PUT_REQUEST(
+        API_ENDPOINTS.updateRegistration,
+        formData,
+        handleSuccess,
+        handleError,
+    )
+
 
 };
 
-function ReviewItem({registration, onStatusChange, onClickAvatar, getStatusColor, parseReviewType}) {
+function ReviewItem({registrationDTO, onStatusChange, onClickAvatar, getStatusColor, parseReviewType}) {
+    const registration = registrationDTO.registration;
+    const otherInfo = Object.fromEntries(
+        Object.entries(registrationDTO).filter(([key]) => key !== "registration")
+    );
+    console.log(otherInfo);
+
     const disabled = registration.status === 'APPROVED';
+    const [visible, setVisible] = useState(false);
 
     return (
         <List.Item
@@ -67,7 +79,37 @@ function ReviewItem({registration, onStatusChange, onClickAvatar, getStatusColor
                     <p style={{color: 'var(--semi-color-text-2)', margin: '4px 0', width: 500}}>
                         当前状态: {parseReviewType(registration.status)}
                     </p>
+                    <Modal
+                        title="报名详情"
+                        visible={visible}
+                        onOk={() => setVisible(false)}
+                        onCancel={() => setVisible(false)}
+                        closeOnEsc={true}
+                        okText={'确定'}
+                        cancelText={'关闭'}
+                    >
+                        {Object.entries(otherInfo).map(([key, value]) => {
+                            return (
+                                <div
+                                    key={key}
+                                    style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        padding: '8px 0',
+                                        borderBottom: '1px solid #f0f0f0',
+                                    }}
+                                >
+                                    <span style={{
+                                        fontWeight: 'bold',
+                                        color: '#333'
+                                    }}>{parseRegistrationDTOType(key)}</span>
+                                    <span style={{color: '#555'}}>{value}</span>
+                                </div>
+                            );
+                        })}
+                    </Modal>
                 </div>
+
             }
             extra={
                 <div style={{display: 'flex', justifyContent: 'flex-end', alignItems: 'center'}}>
@@ -85,6 +127,12 @@ function ReviewItem({registration, onStatusChange, onClickAvatar, getStatusColor
                         >
                             驳回
                         </Button>
+                        <Button
+                            type="primary"
+                            onClick={() => setVisible(true)}
+                        >
+                            详情
+                        </Button>
                     </ButtonGroup>
                 </div>
             }
@@ -93,55 +141,53 @@ function ReviewItem({registration, onStatusChange, onClickAvatar, getStatusColor
 }
 
 
-
-
 export default function ApproveManagement() {
-    const [registrations, setRegistrations] = useState([]);
-    const [isView, setIsView] = useState(false);
+    const [registrationDTOList, setRegistrationDTOList] = useState([]);
+    const [registrationStatus,setRegistrationStatus]=useState(null);
+    const handleSuccess = (message, data) => {
+        console.log(data)
+        setRegistrationDTOList(data);
+    }
+    const handleError = (message) => {
+        Toast.error(message);
+    }
 
-
-    // 获取数据的副作用
     useEffect(() => {
-        // 调用 API 获取注册信息
-        REQUEST.getRegistrationAll('PENDING')
-            .then((response) => {
-                if(!response.ok){
-                    Toast.error("请求错误");
-                }else{
-                    return response.json();
-                }
-            })
-            .then(result=>{
-                if(!result) return ;
-                const code=result.code;
-                if(code===1){
-                    console.log(result.data)
-                    setRegistrations(result.data);
-                }
-            })
-            .catch((error) => {
-                console.error("获取注册信息失败：", error);
-            })
 
-    }, []);
+        const formData = new FormData();
+        formData.set('status',registrationStatus);
+        REQUEST.POST_REQUEST(
+            API_ENDPOINTS.getRegistrationAll,
+            !registrationStatus ? null:formData,
+            handleSuccess,
+            handleError,
+        )
+
+
+    }, [registrationStatus]);
 
     const handleStatusChange = (registration, newStatus) => {
-        updateRegistrationStatus(registration, newStatus, setRegistrations);
+        updateRegistrationStatus(registration, newStatus, setRegistrationDTOList);
+
     };
     const handleClockAvatar = () => {
-        setIsView(true)
+
     }
 
     return (
         <div style={{padding: 20}}>
             <h1>审批管理</h1>
+            <Button theme='solid' type='primary' style={{ marginRight: 8 }} onClick={()=>setRegistrationStatus(null)} disabled={registrationStatus===null}>全部</Button>
+            <Button theme='solid' type='primary' style={{ marginRight: 8 }} onClick={()=>setRegistrationStatus('PENDING')} disabled={registrationStatus==='PENDING'}>审核中</Button>
+            <Button theme='solid' type='primary' style={{ marginRight: 8 }} onClick={()=>setRegistrationStatus('APPROVED')} disabled={registrationStatus==='APPROVED'}>通过</Button>
+            <Button theme='solid' type='primary' style={{ marginRight: 8 }} onClick={()=>setRegistrationStatus('REJECTED')} disabled={registrationStatus==='REJECTED'}>驳回</Button>
             <List
-                dataSource={registrations}
-                renderItem={(registration) => <ReviewItem registration={registration.registration}
-                                                          getStatusColor={getStatusColor}
-                                                          parseReviewType={parseReviewType}
-                                                          onStatusChange={handleStatusChange}
-                                                          onClickAvatar={handleClockAvatar}/>}
+                dataSource={registrationDTOList}
+                renderItem={(registrationDTO) => <ReviewItem registrationDTO={registrationDTO}
+                                                             getStatusColor={getStatusColor}
+                                                             parseReviewType={parseReviewType}
+                                                             onStatusChange={handleStatusChange}
+                                                             onClickAvatar={handleClockAvatar}/>}
             />
         </div>
     );
