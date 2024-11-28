@@ -5,10 +5,9 @@ import {
     ButtonGroup,
     Button,
     Form,
-    Notification, Toast,
+    Toast,
 } from '@douyinfe/semi-ui';
 import API_ENDPOINTS, {getFormData, matchType, REQUEST} from './data/api';
-import TopSlotSvg from "@douyinfe/semi-ui/lib/es/avatar/TopSlotSvg";
 
 
 function CompetitionEdit({prevMatch, onSubmit, onCancel}) {

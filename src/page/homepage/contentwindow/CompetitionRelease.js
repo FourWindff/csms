@@ -1,5 +1,5 @@
 import React from 'react';
-import {Form, Notification, Button, Toast} from '@douyinfe/semi-ui';
+import {Form, Button, Toast} from '@douyinfe/semi-ui';
 import API_ENDPOINTS, {getFormData, matchType, REQUEST} from "./data/api";
 
 export default function CompetitionRelease() {

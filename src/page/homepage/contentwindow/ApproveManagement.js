@@ -1,27 +1,23 @@
 import React, {useEffect, useState} from 'react';
 import {List, Avatar, ButtonGroup, Button, Toast, Modal} from '@douyinfe/semi-ui';
-import API_ENDPOINTS, {getFormData, registrationDTOType, REQUEST, reviewType} from './data/api';
+import API_ENDPOINTS, {
+    getFormData, getStatusColor, parseMatchLabel, parseMemberVOLabel, parseReviewType,
+    REQUEST,
+} from './data/api';
 
-const getStatusColor = (status) => {
-    switch (status) {
-        case 'PENDING':
-            return 'green'; // PENDING 状态使用绿色
-        case 'APPROVED':
-            return 'blue'; // APPROVED 状态使用蓝色
-        case 'REJECTED':
-            return 'red'; // REJECTED 状态使用红色
-        default:
-            return 'gray'; // 默认颜色
-    }
+// 时间格式化函数
+const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('zh-CN', { // 可以根据需要调整格式
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false, // 设置 24 小时制
+    });
 };
-const parseReviewType = (status) => {
-    const type = reviewType.find(item => item.value === status);
-    return type.label;
-}
-const parseRegistrationDTOType = (key) => {
-    const item = registrationDTOType.find(item => item.value === key);
-    return item.label;
-}
 const updateRegistrationStatus = (registration, status, setRegistrationDTOList) => {
     const handleSuccess = (message, data) => {
         Toast.success(message);
@@ -51,16 +47,12 @@ const updateRegistrationStatus = (registration, status, setRegistrationDTOList) 
         handleSuccess,
         handleError,
     )
-
-
 };
 
-function ReviewItem({registrationDTO, onStatusChange, onClickAvatar, getStatusColor, parseReviewType}) {
-    const registration = registrationDTO.registration;
-    const otherInfo = Object.fromEntries(
-        Object.entries(registrationDTO).filter(([key]) => key !== "registration")
-    );
-    console.log(otherInfo);
+function ReviewItem({registrationVO, onStatusChange, onClickAvatar, getStatusColor, parseReviewType}) {
+    const registration = registrationVO.registration;
+    const match = registrationVO.match;
+    const memberVOList = registrationVO.memberVOList;
 
     const disabled = registration.status === 'APPROVED';
     const [visible, setVisible] = useState(false);
@@ -72,9 +64,15 @@ function ReviewItem({registrationDTO, onStatusChange, onClickAvatar, getStatusCo
                             onClick={onClickAvatar}
                             shape="square">{registration.status.charAt(0)}</Avatar>}
             main={
-                <div>
+                <div style={{display: "flex", flexDirection: "column", alignItems: "start"}}>
                     <span style={{color: 'var(--semi-color-text-0)', fontWeight: 500}}>
-                        {`学生ID: ${registration.studentId} | 指导老师ID: ${registration.teacherId} | 竞赛ID: ${registration.matchId}`}
+                        {`竞赛ID: ${registration.matchId}`}
+                    </span>
+                    <span style={{color: 'var(--semi-color-text-0)', fontWeight: 500}}>
+                        {`团队编号：${registration.teamId}`}
+                    </span>
+                    <span style={{color: 'var(--semi-color-text-0)', fontWeight: 500}}>
+                        {`团队人数：${memberVOList.length}`}
                     </span>
                     <p style={{color: 'var(--semi-color-text-2)', margin: '4px 0', width: 500}}>
                         当前状态: {parseReviewType(registration.status)}
@@ -88,7 +86,12 @@ function ReviewItem({registrationDTO, onStatusChange, onClickAvatar, getStatusCo
                         okText={'确定'}
                         cancelText={'关闭'}
                     >
-                        {Object.entries(otherInfo).map(([key, value]) => {
+                        {Object.entries(match).map(([key, value]) => {
+                            // 如果是时间字段，则格式化为直观的时间
+                            const formattedValue = ['competitionStartTime', 'competitionEndTime', 'registrationStartTime', 'registrationEndTime'].includes(key)
+                                ? formatDate(value)
+                                : value;
+
                             return (
                                 <div
                                     key={key}
@@ -99,14 +102,43 @@ function ReviewItem({registrationDTO, onStatusChange, onClickAvatar, getStatusCo
                                         borderBottom: '1px solid #f0f0f0',
                                     }}
                                 >
-                                    <span style={{
-                                        fontWeight: 'bold',
-                                        color: '#333'
-                                    }}>{parseRegistrationDTOType(key)}</span>
-                                    <span style={{color: '#555'}}>{value}</span>
+                        <span style={{ fontWeight: 'bold', color: '#333' }}>
+                            {parseMatchLabel(key)}
+                        </span>
+                                    <span style={{ color: '#555' }}>
+                            {formattedValue}
+                        </span>
                                 </div>
                             );
                         })}
+                        <h5 style={{fontSize: "18px", fontWeight: "600"}}>成员信息 </h5>
+                        {memberVOList.map((memberVO, index) => <div key={index} style={{
+                            padding: '16px',
+                            border: '1px solid #f0f0f0',
+                            marginBottom: '8px'
+                        }}>
+                            {Object.entries(memberVO).map(([key, value]) => {
+                                return (
+                                    <div
+                                        key={key}
+                                        style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            padding: '8px 0',
+                                            borderBottom: '1px solid #f0f0f0',
+                                        }}
+                                    >
+                                        <span style={{fontWeight: 'bold', color: '#333'}}>
+                                            {parseMemberVOLabel(key)}
+                                        </span>
+                                        <span style={{color: '#555'}}>
+                                            {value}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>)}
+
                     </Modal>
                 </div>
 
@@ -142,11 +174,11 @@ function ReviewItem({registrationDTO, onStatusChange, onClickAvatar, getStatusCo
 
 
 export default function ApproveManagement() {
-    const [registrationDTOList, setRegistrationDTOList] = useState([]);
-    const [registrationStatus,setRegistrationStatus]=useState(null);
+    const [registrationVOList, setRegistrationVOList] = useState([]);
+    const [registrationStatus, setRegistrationStatus] = useState(null);
     const handleSuccess = (message, data) => {
         console.log(data)
-        setRegistrationDTOList(data);
+        setRegistrationVOList(data);
     }
     const handleError = (message) => {
         Toast.error(message);
@@ -155,10 +187,10 @@ export default function ApproveManagement() {
     useEffect(() => {
 
         const formData = new FormData();
-        formData.set('status',registrationStatus);
+        formData.set('status', registrationStatus);
         REQUEST.POST_REQUEST(
             API_ENDPOINTS.getRegistrationAll,
-            !registrationStatus ? null:formData,
+            !registrationStatus ? null : formData,
             handleSuccess,
             handleError,
         )
@@ -167,7 +199,7 @@ export default function ApproveManagement() {
     }, [registrationStatus]);
 
     const handleStatusChange = (registration, newStatus) => {
-        updateRegistrationStatus(registration, newStatus, setRegistrationDTOList);
+        updateRegistrationStatus(registration, newStatus, setRegistrationVOList);
 
     };
     const handleClockAvatar = () => {
@@ -177,17 +209,24 @@ export default function ApproveManagement() {
     return (
         <div style={{padding: 20}}>
             <h1>审批管理</h1>
-            <Button theme='solid' type='primary' style={{ marginRight: 8 }} onClick={()=>setRegistrationStatus(null)} disabled={registrationStatus===null}>全部</Button>
-            <Button theme='solid' type='primary' style={{ marginRight: 8 }} onClick={()=>setRegistrationStatus('PENDING')} disabled={registrationStatus==='PENDING'}>审核中</Button>
-            <Button theme='solid' type='primary' style={{ marginRight: 8 }} onClick={()=>setRegistrationStatus('APPROVED')} disabled={registrationStatus==='APPROVED'}>通过</Button>
-            <Button theme='solid' type='primary' style={{ marginRight: 8 }} onClick={()=>setRegistrationStatus('REJECTED')} disabled={registrationStatus==='REJECTED'}>驳回</Button>
+            <Button theme='solid' type='primary' style={{marginRight: 8}} onClick={() => setRegistrationStatus(null)}
+                    disabled={registrationStatus === null}>全部</Button>
+            <Button theme='solid' type='primary' style={{marginRight: 8}}
+                    onClick={() => setRegistrationStatus('PENDING')}
+                    disabled={registrationStatus === 'PENDING'}>审核中</Button>
+            <Button theme='solid' type='primary' style={{marginRight: 8}}
+                    onClick={() => setRegistrationStatus('APPROVED')}
+                    disabled={registrationStatus === 'APPROVED'}>通过</Button>
+            <Button theme='solid' type='primary' style={{marginRight: 8}}
+                    onClick={() => setRegistrationStatus('REJECTED')}
+                    disabled={registrationStatus === 'REJECTED'}>驳回</Button>
             <List
-                dataSource={registrationDTOList}
-                renderItem={(registrationDTO) => <ReviewItem registrationDTO={registrationDTO}
-                                                             getStatusColor={getStatusColor}
-                                                             parseReviewType={parseReviewType}
-                                                             onStatusChange={handleStatusChange}
-                                                             onClickAvatar={handleClockAvatar}/>}
+                dataSource={registrationVOList}
+                renderItem={(registrationVO) => <ReviewItem registrationVO={registrationVO}
+                                                            getStatusColor={getStatusColor}
+                                                            parseReviewType={parseReviewType}
+                                                            onStatusChange={handleStatusChange}
+                                                            onClickAvatar={handleClockAvatar}/>}
             />
         </div>
     );
