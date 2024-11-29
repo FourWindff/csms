@@ -1,6 +1,6 @@
 // AuthPage.js
 import React, {useState} from 'react';
-import {Form, Button, Tabs, Toast, Notification} from '@douyinfe/semi-ui';
+import {Form, Button, Tabs, Toast} from '@douyinfe/semi-ui';
 import {useNavigate} from 'react-router-dom';
 import API_ENDPOINTS, {getFormData, REQUEST} from "../homepage/contentwindow/data/api";
 

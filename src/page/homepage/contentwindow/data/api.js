@@ -1,4 +1,4 @@
-import {Notification, Toast} from "@douyinfe/semi-ui";
+import {Toast} from "@douyinfe/semi-ui";
 
 const baseUrl = 'http://localhost:8080'; // 确保以http或https开头
 

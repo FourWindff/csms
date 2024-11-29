@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useContext} from "react";
 import {List, Typography, Divider, Toast} from "@douyinfe/semi-ui";
 
-import API_ENDPOINTS, {matchLabel, memberVOLabel, REQUEST} from "./data/api";
+import API_ENDPOINTS, { REQUEST} from "./data/api";
 import {UserContext} from "../index"; // 假设有这样的 API 配置
 const getStatusLabel = (status) => {
     switch (status) {
@@ -38,7 +38,7 @@ const RegistrationVOItem = ({item}) => {
             <Typography.Text strong>
                 成员人数：
             </Typography.Text>
-            {memberVOList.length}
+            {memberVOList.filter(member => member.role === 'student').length}
             <Divider type="vertical"/>
 
             <Typography.Text strong>
