@@ -1,8 +1,8 @@
 import React, {useState, useEffect, useContext} from "react";
 import {List, Typography, Divider, Toast} from "@douyinfe/semi-ui";
 
-import API_ENDPOINTS, { REQUEST} from "./data/api";
-import {UserContext} from "../index"; // 假设有这样的 API 配置
+import API_ENDPOINTS, { REQUEST} from "../data/api";
+import {UserContext} from "../../index"; // 假设有这样的 API 配置
 const getStatusLabel = (status) => {
     switch (status) {
         case 'PENDING':

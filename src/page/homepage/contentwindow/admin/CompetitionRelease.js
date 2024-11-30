@@ -1,6 +1,6 @@
 import React from 'react';
 import {Form, Button, Toast} from '@douyinfe/semi-ui';
-import API_ENDPOINTS, {getFormData, matchType, REQUEST} from "./data/api";
+import API_ENDPOINTS, {getFormData, matchType, REQUEST} from "../data/api";
 
 export default function CompetitionRelease() {
     // 表单提交时的回调

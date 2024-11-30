@@ -7,7 +7,7 @@ import {
     Form,
     Toast,
 } from '@douyinfe/semi-ui';
-import API_ENDPOINTS, {getFormData, matchType, REQUEST} from './data/api';
+import API_ENDPOINTS, {getFormData, matchType, REQUEST} from '../data/api';
 
 
 function CompetitionEdit({prevMatch, onSubmit, onCancel}) {

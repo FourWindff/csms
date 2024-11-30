@@ -21,6 +21,12 @@ const API_ENDPOINTS = {
     saveRegistration: `${baseUrl}/registration/saveRegistration`,
     getRegistrationAll: `${baseUrl}/registration/getAllRegistration`,
     updateRegistration: `${baseUrl}/registration/updateRegistration`,
+
+    saveWork:`${baseUrl}/work/upload`,
+    updateWork:`${baseUrl}/work/update`,
+    getWorkByUserId:`${baseUrl}/work/team`,
+    getWorkAll:`${baseUrl}/work/all`,
+    getFile:`${baseUrl}/work/file`,
 };
 
 const GET_REQUEST = (url, value, onSuccess, onError) => {
@@ -170,7 +176,6 @@ const DELETE_REQUEST = (url, value, onSuccess, onError) => {
             Toast.error(`错误！${error}`);
         })
 }
-
 const getFormData = (obj) => {
     const formData = new FormData();
     Object.entries(obj).forEach(([key, value]) => {
@@ -210,7 +215,8 @@ const gradeType = [
 const reviewType = [
     {value: "PENDING", label: "审核中"},
     {value: "APPROVED", label: "审核通过"},
-    {value: "REJECTED", label: "审核驳回"}
+    {value: "REJECTED", label: "审核驳回"},
+    {value: "NOT_SUBMIT", label: "未提交"},
 ];
 const registrationDTOType = [
     {value: "studentName", label: "学生姓名"},
@@ -257,7 +263,7 @@ const getStatusColor = (status) => {
 };
 const parseReviewType = (status) => {
     const type = reviewType.find(item => item.value === status);
-    return type.label;
+    return type.label || '未知状态';
 }
 const parseMatchLabel = (key) => {
     const item = matchLabel.find(item => item.value === key);
@@ -265,12 +271,42 @@ const parseMatchLabel = (key) => {
 }
 const parseMemberVOLabel = (key) => {
     const item = memberVOLabel.find(item => item.value === key);
-    return item.label;
+    return item.label ;
 }
 
+const getOriginalFileName = (fileNameWithUUID) => {
+    // 使用下划线拆分文件名
+    const parts = fileNameWithUUID.split('_');
+
+    // 如果拆分结果的长度为2，说明是UUID和文件名
+    if (parts.length === 2) {
+        return parts[1];
+    } else {
+        throw new Error('文件名格式不正确');
+    }
+}
+
+const convertTimeFormat=(timeString)=> {
+    // 去掉纳秒部分，JavaScript只支持毫秒级时间
+    const dateString = timeString.split('.')[0];
+
+    // 创建 Date 对象
+    const date = new Date(dateString);
+
+    // 获取年份、月份、日期、小时、分钟和秒
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始，需要加1并格式化
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+
+    // 格式化并返回最终时间
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
 
 export {
     matchType, reviewType, gradeType, genderType, REQUEST, registrationDTOType, matchLabel, memberVOLabel,
 }
-export {getStatusColor, parseMatchLabel, parseMemberVOLabel, parseReviewType, getFormData}
+export {getStatusColor, parseMatchLabel, parseMemberVOLabel, parseReviewType, getFormData,getOriginalFileName,convertTimeFormat}
 export default API_ENDPOINTS;

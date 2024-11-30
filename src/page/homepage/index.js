@@ -6,13 +6,16 @@ import {
 } from '@douyinfe/semi-icons-lab';
 import styles from './homepage.module.css';
 import {useLocation, useNavigate} from "react-router-dom";
-import CompetitionRelease from "./contentwindow/CompetitionRelease";
-import CompetitionManagement from "./contentwindow/CompetitionManagement";
-import ApproveManagement from "./contentwindow/ApproveManagement";
+import CompetitionRelease from "./contentwindow/admin/CompetitionRelease";
+import CompetitionManagement from "./contentwindow/admin/CompetitionManagement";
+import ApproveManagement from "./contentwindow/admin/ApproveManagement";
 import CompetitionView from "./contentwindow/CompetitionView";
-import TeacherInfo from "./contentwindow/TeacherInfo";
-import StudentInfo from "./contentwindow/StudentInfo";
-import MyApplication from "./contentwindow/MyApplications";
+import TeacherInfo from "./contentwindow/teacher/TeacherInfo";
+import StudentInfo from "./contentwindow/student/StudentInfo";
+import MyApplication from "./contentwindow/student/MyApplications";
+import WorkManagement from "./contentwindow/admin/WorkManagement";
+import MyWork from "./contentwindow/student/MyWork";
+
 
 const getMenuItems = (role) => {
     switch (role) {
@@ -20,6 +23,7 @@ const getMenuItems = (role) => {
             return [
                 {itemKey: 'competition-list', text: '竞赛列表', icon: <IconTreeSelect/>},
                 {itemKey: 'my-applications', text: '我的报名', icon: <IconBadge/>},
+                {itemKey: 'my-work', text: '我的提交', icon: <IconBadge/>},
                 {itemKey: 'student-info', text: '我的信息', icon: <IconBadge/>}
             ];
         case 'teacher':
@@ -30,6 +34,7 @@ const getMenuItems = (role) => {
         case 'admin':
             return [
                 {itemKey: 'approve-management', text: '审批管理', icon: <IconBreadcrumb/>},
+                {itemKey: 'work-management', text: '作品管理', icon: <IconBreadcrumb/>},
                 {itemKey: 'competition-management', text: '竞赛管理', icon: <IconTreeSelect/>},
                 {itemKey: 'competition-release', text: '竞赛发布', icon: <IconTreeSelect/>}
             ];
@@ -43,10 +48,12 @@ const renderContent = (itemKey) => {
             return <CompetitionView/>
         case 'my-applications':
             return <MyApplication/>
-        case 'my-guidance':
-            return <div>我的指导内容</div>;
+        case 'work-management':
+            return <WorkManagement/>
         case 'student-info':
             return <StudentInfo/>
+        case 'my-work':
+            return <MyWork/>
         case 'teacher-info':
             return <TeacherInfo/>
         case 'approve-management':
@@ -59,7 +66,6 @@ const renderContent = (itemKey) => {
             return <div>欢迎使用竞赛服务管理系统！</div>;
     }
 };
-
 function LeftNav({role, onMenuClick}) {
     return (<Nav
         style={{maxWidth: 220, height: '100%'}}
@@ -72,19 +78,15 @@ function LeftNav({role, onMenuClick}) {
     />);
 }
 
-// 主页面组件
-export const UserContext = createContext({userId:0,role:null});
+export const UserContext = createContext({userId: 0, role: null});
 export default function HomePage() {
     const {Header, Footer, Sider, Content} = Layout;
     const location = useLocation();
     const {role, username, userId} = location.state;
     const navigate = useNavigate();
 
-
-    // 状态管理选中的菜单项
     const [selectedMenu, setSelectedMenu] = useState('');
 
-    // 顶部头部组件
     const TopHeader = () => (<Header className={styles.header}>
         <div>
             <Nav
@@ -110,7 +112,6 @@ export default function HomePage() {
         </div>
     </Header>);
 
-    // 底部内容组件
     const FooterContent = () => (
         <>
             <span style={{display: 'flex', alignItems: 'center',}}>
@@ -125,7 +126,7 @@ export default function HomePage() {
     );
 
     return (
-        <UserContext.Provider value={{userId: userId,role:role}}>
+        <UserContext.Provider value={{userId: userId, role: role}}>
             <Layout className={styles.container}>
                 <TopHeader/>
                 <Layout>

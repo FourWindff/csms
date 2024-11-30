@@ -1,7 +1,7 @@
-import React, {useState, useEffect, useContext, useRef} from 'react';
-import {Form, Input, Notification, Button, Select, Toast} from '@douyinfe/semi-ui';
-import API_ENDPOINTS, {genderType, getFormData, gradeType, matchType, REQUEST} from './data/api';
-import {UserContext} from "../index"; // API 端点
+import React, { useEffect, useContext, useRef} from 'react';
+import {Form, Button, Toast} from '@douyinfe/semi-ui';
+import API_ENDPOINTS, {genderType, getFormData, REQUEST} from '../data/api';
+import {UserContext} from "../../index"; // API 端点
 
 
 export default function TeacherInfo() {

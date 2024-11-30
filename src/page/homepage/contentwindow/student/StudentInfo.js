@@ -1,7 +1,7 @@
 import React, {useContext, useEffect, useRef} from 'react';
 import {Form, Button, Toast} from '@douyinfe/semi-ui';
-import API_ENDPOINTS, {genderType, getFormData, gradeType, REQUEST} from './data/api';
-import {UserContext} from "../index";
+import API_ENDPOINTS, {genderType, getFormData, gradeType, REQUEST} from '../data/api';
+import {UserContext} from "../../index";
 
 
 

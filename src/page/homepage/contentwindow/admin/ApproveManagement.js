@@ -3,7 +3,7 @@ import {List, Avatar, ButtonGroup, Button, Toast, Modal} from '@douyinfe/semi-ui
 import API_ENDPOINTS, {
     getFormData, getStatusColor, parseMatchLabel, parseMemberVOLabel, parseReviewType,
     REQUEST,
-} from './data/api';
+} from '../data/api';
 
 // 时间格式化函数
 const formatDate = (dateString) => {
